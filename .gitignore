@@ -1,0 +1,37 @@
+# Dataset comprimido y descomprimido (pesa ~250 MB; GitHub rechaza archivos de más de 100 MB)
+*.zip
+Brain_Tumor_Data/
+
+# Pesos de modelos entrenados
+*.pt
+*.pth
+*.ckpt
+
+# Python y Jupyter
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Ambientes virtuales
+.venv/
+venv/
+env/
+
+# Archivos auxiliares de la compilación de LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

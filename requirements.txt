@@ -1,0 +1,11 @@
+# Instalar PyTorch ANTES de este archivo, según la tarjeta gráfica (ver README, paso 2).
+# Las versiones de torch y torchvision coinciden con las de ese paso, así que pip no las reinstala.
+torch==2.14.1
+torchvision==0.29.1
+numpy==2.5.2
+pandas==3.0.6
+matplotlib==3.11.2
+scikit-learn==1.9.1
+seaborn==0.13.2
+grad-cam==1.5.7
+ipykernel==7.4.0
