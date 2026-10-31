@@ -19,10 +19,10 @@
 \usepackage{amssymb}  % assumes amsmath package installed
 
 \title{\LARGE \bf
-Clasificación de MRI con Redes Neuronales Convolucionales para Tipos de Cáncer
+Clasificación de MRI con Redes Neuronales Convolucionales para tipos de tumores cerebrales  
 }
 
-\author{Jhon Edwuard Zacipa Casas José Luis Sarta Alvarez  y Marco Julio Gómez Amado }
+\author{Jhon Edwuard Zacipa Casas, José Luis Sarta Alvarez  y Marco Julio Gómez Amado }
 
 \usepackage{float}
 \begin{document}
@@ -38,40 +38,35 @@ Clasificación de MRI con Redes Neuronales Convolucionales para Tipos de Cáncer
 
 En los últimos años, el campo de la visión por computadora y el aprendizaje profundo ha experimentado un crecimiento exponencial, revolucionando aplicaciones críticas en la biomedicina y la bioinformática. A pesar de los significativos avances en el análisis automatizado de imágenes médicas, persisten desafíos importantes, tales como la alta carga computacional en el manejo de datos volumétricos por Imágenes de Resonancia Magnética (MRI), la escasez de volúmenes masivos de datos etiquetados y la necesidad de estandarizar procesos para mitigar el sobreajuste en modelos predictivos.
 
-Dentro de este panorama, el problema específico abordado en este informe es la clasificación automatizada de neoplasias cerebrales a partir de imágenes de resonancia magnética (MRI), categorizadas en cuatro clases principales (Glioma, Healthy, Meningioma y Pituitary). La relevancia de este desafío radica en la necesidad de contar con herramientas diagnósticas rápidas y de alta precisión que reduzcan la variabilidad subjetiva. 
+Dentro de este panorama, el problema específico abordado en este informe es la clasificación automatizada de neoplasias cerebrales a partir de imágenes de resonancia magnética (MRI), categorizadas en cuatro clases principales (Glioma, Healthy, Meningioma y Pituitary). La relevancia de este desafío radica en la necesidad de contar con herramientas diagnósticas rápidas y de alta precisión que reduzcan la variabilidad subjetiva. Ante la escasez de datos etiquetados, Swati \textit{et al.}~\cite{swati2019} mostraron que el ajuste fino por bloques de una CNN pre-entrenada alcanza una exactitud promedio del $94.82\%$ en la clasificación de tumores cerebrales en MRI, lo que motiva la estrategia de Fine-Tuning evaluada en este trabajo. 
 
-El presente estudio presenta el diseño, entrenamiento y evaluación comparativa de tres arquitecturas de aprendizaje profundo: una CNN personalizada desde cero, un modelo ResNet18 con extracción de características, y una estrategia propuesta de ResNet18 con Fine-Tuning parcial en el bloque layer4. Los principales aportes de este trabajo consisten en el logro de una precisión global del $98.0\%$ con convergencia óptima en tan solo 5 épocas, respaldada por un análisis riguroso de métricas cuantitativas y validada mediante técnicas de explicabilidad visual con Grad-CAM para garantizar la confiabilidad clínica del modelo.
+El objetivo de este trabajo es desarrollar un método basado en redes neuronales convolucionales que clasifique con exactitud cortes 2D de MRI en las cuatro clases. Para ello, se presenta el diseño, entrenamiento y evaluación comparativa de tres arquitecturas de aprendizaje profundo: una CNN personalizada desde cero~\cite{c1}, un modelo ResNet18 con extracción de características, y una estrategia propuesta de ResNet18 con Fine-Tuning parcial en el bloque layer4. Los principales aportes de este trabajo consisten en el logro de una exactitud global del $96.3\%$ con convergencia óptima en tan solo 5 épocas, respaldada por un análisis riguroso de métricas cuantitativas y validada mediante técnicas de explicabilidad visual con Grad-CAM para garantizar la confiabilidad clínica del modelo.
 
 
 \section{Metodología}
 
-2.1 Enfoque General del Estudio. 
-El presente estudio propone un enfoque comparativo basado en Transfer Learning y Fine-Tuning para la clasificación automatizada de tumores cerebrales a partir de imágenes médicas. El flujo experimental evalúa y contrasta tres variantes: una CNN personalizada, un modelo de extracción de características estáticas y una estrategia propuesta de ajuste fino parcial (Fine-Tuning en el bloque layer4), la cual optimiza la representación espacial de la lesión sin alterar las características generales de bajo nivel.
+2.1 Datos, Preprocesamiento y División.
+Se utilizó un conjunto de datos de acceso público compuesto por $7023$ imágenes de resonancia magnética (MRI)\footnote{\url{https://www.kaggle.com/datasets/rm1000/brain-tumor-mri-scans}}, distribuidas en cuatro clases clínicas: \textit{Glioma} ($1621$), \textit{Healthy} ($2000$), \textit{Meningioma} ($1645$) y \textit{Pituitary} ($1757$).
 
-2.2 Datos, Preprocesamiento y División.
-Se utilizó un conjunto de datos de acceso público compuesto por $7,023$ imágenes de resonancia magnética (MRI)\footnote{\url{https://www.kaggle.com/datasets/rm1000/brain-tumor-mri-scans}}, distribuidas en cuatro clases clínicas: \textit{Glioma}, \textit{Healthy}, \textit{Meningioma} y \textit{Pituitary}.
+\textbf{Preprocesamiento:} Las imágenes se redimensionaron a $128\times128$ píxeles mediante \texttt{transforms.Resize} y se convirtieron a tensores en el rango $[0.0, 1.0]$ mediante \texttt{transforms.ToTensor()}; no se aplicó aumento de datos ni la normalización de ImageNet.
 
-\textbf{Preprocesamiento:} Las imágenes fueron sometidas a un pipeline de transformación inicial consistente en un redimensionamiento uniforme a una resolución de \texttt{img\_size} mediante la función \texttt{transforms.Resize} y su conversión a tensores normalizados en el rango de $[0.0, 1.0]$ mediante \texttt{transforms.ToTensor()}.
+\textbf{División del Conjunto:} Los datos se dividieron aleatoriamente, con semilla $42$, en entrenamiento ($70\%$, $4916$ imágenes), validación ($15\%$, $1053$) y prueba ($15\%$, $1054$), con proporciones de clase similares en los tres subconjuntos.
 
-\textbf{División del Conjunto:} Los datos fueron segmentados en conjuntos independientes para garantizar una evaluación imparcial durante las fases de entrenamiento, validación y prueba (con un conjunto de evaluación final compuesto por $1,405$ imágenes).
+2.2 Arquitectura de los Modelos Evaluados.
+Se implementaron y compararon tres arquitecturas en PyTorch con el mismo clasificador final: una capa lineal de $128$ neuronas, función de activación ReLU, Dropout de $0.3$ para mitigar el sobreajuste y una capa lineal de salida de $128 \to 4$ clases.
+Modelo 1 (CNN Personalizada): tres bloques convolucionales ($3\times3$, con $16$, $32$ y $64$ filtros), cada uno con BatchNorm, ReLU y max-pooling de $2\times2$, seguidos del clasificador ($2.12$M parámetros entrenables).
+Modelo 2 (ResNet18 - Feature Extraction): utiliza la arquitectura ResNet18~\cite{he2016} con pesos pre-entrenados en ImageNet~\cite{deng2009} y el tronco convolucional completamente congelado; solo se entrena el clasificador ($66$ mil parámetros).
+Modelo 3 (ResNet18 - Fine-Tuning Parcial): mantiene congeladas las capas de bajo nivel (\texttt{layer1} a \texttt{layer3}) y descongela el bloque superior \texttt{layer4} junto con el clasificador ($8.46$M parámetros), con el fin de adaptar las características de alto nivel a las MRI.
 
-2.3 Arquitectura de los Modelos Evaluados.
-Se implementaron y compararon tres arquitecturas de aprendizaje profundo en PyTorch:
-Modelo 1 (CNN Personalizada): Una red neuronal convolucional diseñada desde cero compuesta por tres capas convolucionales secuenciales, activaciones ReLU y bloques de agrupamiento (max-pooling).
-Modelo 2 (ResNet18 - Feature Extraction): Utiliza la arquitectura base ResNet18 con el tronco convolucional completamente congelado, manteniendo fijos los pesos pre-entrenados y entrenando únicamente un clasificador lineal adaptado al problema.
-Modelo 3 (ResNet18 - Fine-Tuning Parcial / modelo propuesto): Modifica la arquitectura ResNet18 congelando las capas iniciales de bajo nivel (layer1 a layer3) y descongelando selectivamente el bloque convolucional superior (layer4) junto con un clasificador rediseñado. Este clasificador consta de una capa lineal de $512 \to 128$ neuronas, función de activación ReLU, una tasa de abandono (Dropout) del $0.3$ para mitigar el sobreajuste, y una capa lineal de salida de $128 \to 4$ clases correspondientes a las patologías evaluadas.
-
-2.4 Estrategia de Entrenamiento y Evaluación.
-Hiperparámetros y Optimizador: El entrenamiento del Modelo 3 se configuró utilizando el optimizador Adam con una tasa de aprendizaje ($\text{lr}$) de $1\times 10^{-4}$ y una función de pérdida de entropía cruzada (Cross-Entropy Loss). El proceso se ejecutó de forma eficiente a lo largo de un ciclo corto de $5$ épocas debido a la rápida convergencia.
-Procedimiento de Validación: Se empleó un conjunto de validación independiente monitoreado por época para registrar las curvas de aprendizaje (accuracy y loss).
-Métricas de Evaluación: Para cuantificar el desempeño de los clasificadores, se utilizaron la Precisión Global (Accuracy), y las métricas por clase de F1-Score, además de promedios macro y ponderados para evaluar la sensibilidad ante las clases.
-
-2.5 Análisis Adicionales y Explicabilidad (Grad-CAM)
-Como parte de los estudios analíticos adicionales para evaluar la contribución de los componentes del modelo y su fiabilidad diagnóstica, se incorporó la técnica de explicabilidad Grad-CAM (Gradient-weighted Class Activation Mapping). Esta herramienta evalúa los gradientes que fluyen hacia el último bloque convolucional (layer4), generando mapas de calor superpuestos sobre las MRI con el fin de verificar empíricamente que el modelo focaliza su atención en las regiones tumorales reales y no en el contorno o en ruido de fondo.
+2.3 Estrategia de Entrenamiento y Evaluación.
+Hiperparámetros y Optimizador: Los tres modelos se entrenaron con el optimizador Adam, la función de pérdida de entropía cruzada (Cross-Entropy Loss) y lotes de $32$ imágenes. Los Modelos 1 y 2 usaron una tasa de aprendizaje de $1\times 10^{-3}$ durante $8$ épocas, y el Modelo 3 una de $1\times 10^{-4}$ durante $5$ épocas, para no alterar bruscamente los pesos pre-entrenados.
+Procedimiento de Validación: El conjunto de validación se evaluó en cada época para registrar las curvas de aprendizaje, fijar el número de épocas y seleccionar el mejor modelo; el conjunto de prueba se usó una sola vez al final. Para la reproducibilidad, se fijó la semilla $42$ antes de entrenar cada modelo y se activó el modo determinista de cuDNN.
+Métricas de Evaluación: Se reportan la exactitud global (Accuracy) y el F1-Score por clase, que equilibra falsos positivos y falsos negativos, ambos relevantes en el diagnóstico clínico.
+Explicabilidad: Se aplicó Grad-CAM sobre el último bloque convolucional (\texttt{layer4}) para visualizar las regiones de la imagen que sustentan cada predicción.
 
 \section{Resultados}
 
-Los experimentos evaluaron el desempeño de las tres arquitecturas sobre el conjunto de prueba independiente ($1,405$ imágenes).
+Los experimentos evaluaron el desempeño de las tres arquitecturas sobre el conjunto de prueba independiente ($1054$ imágenes).
 
 3.1 Tabla Comparativa de Modelos. 
 La Tabla I resume el rendimiento cuantitativo global y por clases de los tres enfoques experimentales evaluados.
@@ -85,58 +80,53 @@ La Tabla I resume el rendimiento cuantitativo global y por clases de los tres en
         \textbf{Métrica / Enfoque} & \textbf{Modelo 1: CNN} & \textbf{Modelo 2: Feat. Ext.} & \textbf{Modelo 3: Fine-Tuning} \\ \hline
         Estrategia & Desde cero & Tronco congelado & Bloque \texttt{layer4} \\ \hline
         Épocas & 8 & 8 & \textbf{5} \\ \hline
-        Precisión Global & 96.0\% & 91.0\% & \textbf{98.0\%} \\ \hline
-        F1-Score (Glioma) & 0.93 & 0.88 & \textbf{0.96} \\ \hline
-        F1-Score (Healthy) & 0.98 & 0.98 & \textbf{0.99} \\ \hline
-        F1-Score (Meningioma) & 0.90 & 0.83 & \textbf{0.95} \\ \hline
-        F1-Score (Pituitary) & 0.97 & 0.93 & \textbf{0.99} \\ \hline
+        Exactitud Global & 92.3\% & 90.5\% & \textbf{96.3\%} \\ \hline
+        F1-Score (Glioma) & 0.91 & 0.87 & \textbf{0.95} \\ \hline
+        F1-Score (Healthy) & 0.96 & 0.97 & \textbf{0.99} \\ \hline
+        F1-Score (Meningioma) & 0.83 & 0.82 & \textbf{0.93} \\ \hline
+        F1-Score (Pituitary) & 0.97 & 0.94 & \textbf{0.98} \\ \hline
     \end{tabular}%
     }
 \end{table}
-Los resultados demuestran que, si bien una arquitectura entrenada desde cero ofrece un desempeño competitivo ($96.0\%$), la extracción pura de características limita el aprendizaje ($91.0\%$). En contraste, el Modelo 3 (Fine-Tuning) maximiza la precisión global ($98.0\%$) y eleva significativamente el F1-score en clases complejas como el Meningioma ($0.95$)
+Los resultados demuestran que, si bien una arquitectura entrenada desde cero ofrece un desempeño competitivo ($92.3\%$), la extracción pura de características limita el aprendizaje ($90.5\%$). En contraste, el Modelo 3 (Fine-Tuning) maximiza la exactitud global ($96.3\%$) y eleva significativamente el F1-score en clases complejas como el Meningioma ($0.93$)
 
 3.2 Curvas de Aprendizaje.
-El Modelo 3 (Fine-Tuning parcial) alcanzó una precisión global del $98.0\%$. El análisis del proceso de optimización se refleja en las curvas de aprendizaje
+La Fig.~\ref{fig:curvas} muestra las curvas de aprendizaje del Modelo 3.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.50\textwidth]{curvas_aprendizaje.png}
-    \caption{Evolución de la precisión y función de pérdida en entrenamiento y validación del Modelo 3.}
+    \caption{Evolución de la Exactitud y función de pérdida en entrenamiento y validación del Modelo 3.}
     \label{fig:curvas}
 \end{figure}
-Las curvas evidencian una convergencia eficiente en la época 4, registrando una pérdida de validación de $0.083$ y estabilizando la precisión de validación entre el $97.5\%$ y el $98.0\%$, lo que confirma la ausencia de sobreajuste severo.
+La pérdida de validación alcanza su mínimo ($0.118$) en la época 2 y luego deja de disminuir, mientras que la exactitud de validación se estabiliza entre el $95.7\%$ y el $96.8\%$.
 
 3.3 Análisis Cualitativo y Explicabilidad (Grad-CAM). 
-Para validar la interpretabilidad clínica del modelo, se empleó Grad-CAM sobre las imágenes de prueba:
+Para analizar la interpretabilidad del modelo, se empleó Grad-CAM sobre imágenes del conjunto de prueba.
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.30\textwidth]{gradcam_verificacion.png}
-    \caption{Mapa de activación Grad-CAM (Clase Real: 3 | Predicho: 3 con 99.9\% de confianza).}
+    \includegraphics[width=\columnwidth]{gradcam_aciertos_fallos.png}
+    \caption{Mapas de activación Grad-CAM del Modelo 3 sobre imágenes de prueba: acierto (izquierda) y fallo (derecha).}
     \label{fig:gradcam}
 \end{figure}
-La evaluación visual demostró que el modelo emite predicciones correctas respaldadas por una confianza del $99.9\%$ en la instancia evaluada (Clase 3). El mapa de calor confirma que el sistema concentra sus activaciones máximas estrictamente sobre la masa tumoral.
+La Fig.~\ref{fig:gradcam} muestra un acierto y un fallo del Modelo 3. En el acierto (\textit{pituitary}, $99.4\%$ de confianza), las activaciones se concentran en la región central, próxima a la zona selar, aunque el mapa es difuso por su baja resolución ($4\times4$ en \texttt{layer4}). En el fallo, un \textit{glioma} fue clasificado como \textit{meningioma} con $98.9\%$ de confianza y las activaciones se ubicaron en el borde del cráneo, fuera del tejido tumoral; este error corresponde a la confusión más frecuente entre ambas clases.
 \section{Discusión}
 
 4.1 Interpretación y Contextualización de los Hallazgos.
-Los resultados obtenidos demuestran que la estrategia de Fine-Tuning parcial en el bloque layer4 de ResNet18 (Modelo 3) supera tanto al entrenamiento desde cero (Modelo 1) como a la extracción de características estáticas (Modelo 2), alcanzando una precisión global del $98.0\%$. 
+El Modelo 3 obtuvo el mejor desempeño tanto en validación ($96.8\%$) como en prueba ($96.3\%$), en línea con lo reportado por Swati \textit{et al.}~\cite{swati2019} para el ajuste fino de CNN pre-entrenadas en MRI. El Modelo 2 presenta un sesgo alto: con el tronco congelado, las características aprendidas en imágenes naturales no se adaptan a las MRI, y su exactitud de entrenamiento ($90.0\%$) es similar a la de validación ($89.1\%$). Al descongelar \texttt{layer4}, el Modelo 3 adapta las características de alto nivel conservando las de bajo nivel, mientras que el Modelo 1, entrenado desde cero, resulta competitivo ($92.3\%$) con cuatro veces menos parámetros entrenables que el Modelo 3. En los tres modelos, Meningioma es la clase con menor F1-Score, y el fallo de la Fig.~\ref{fig:gradcam} ilustra su confusión con Glioma. En el Modelo 3, la diferencia entre la exactitud de entrenamiento ($99.5\%$) y la de validación ($96.8\%$) indica un leve sobreajuste: el modelo rinde mejor con los datos con que se entrenó que con datos nuevos.
 
-Asimismo, la validación mediante Grad-CAM permitió demostrar que el sistema emite diagnósticos con una confianza del $99.9\%$ y concentra sus activaciones estrictamente sobre la masa tumoral.
+Asimismo, el análisis con Grad-CAM evidenció que una confianza alta no garantiza una predicción correcta, pues el modelo puede apoyarse en regiones ajenas al tumor.
 
-4.2 Limitaciones del Estudio. 
-A pesar del sólido desempeño alcanzado, es fundamental reconocer las siguientes limitaciones:
-Representatividad de los Datos: Aunque el conjunto de datos utilizado comprende $7,023$ imágenes de resonancia magnética de acceso público, las fuentes pueden no reflejar completamente la variabilidad de equipos de resonancia, intensidades de campo magnético o artefactos de movimiento presentes en la práctica clínica real.
-
-Sensibilidad a Hiperparámetros: El rendimiento estuvo acotado a una tasa de aprendizaje de $1\times 10^{-4}$ y al ajuste específico del bloque layer4; explorar esquemas de descongelación gradual (gradual unfreezing) podría refinar aún más el equilibrio entre estabilidad y adaptación.
-
-Como líneas de trabajo futuro se propone: Incorporar técnicas avanzadas de aumento de datos (data augmentation), con el fin de enriquecer la variabilidad interpaciente, equilibrar clases minoritarias y mitigar sesgos.
-
-Emplear conjuntos de datos provenientes de diferentes centros hospitalarios y equipos de resonancia magnética con distintas intensidades de campo magnético.
+4.2 Limitaciones del Estudio.
+Los resultados provienen de una sola ejecución con semilla fija, por lo que no se estima su variabilidad. La división se realizó por imagen y no por paciente, de modo que cortes de un mismo paciente podrían quedar tanto en entrenamiento como en prueba. Además, no se aplicó aumento de datos ni la normalización de ImageNet, y el conjunto de datos, de acceso público, puede no reflejar la variabilidad de equipos y protocolos de resonancia de la práctica clínica. Como trabajo futuro se propone incorporar aumento de datos, calibrar la confianza del modelo y validarlo con imágenes de distintos centros hospitalarios.
 
 % Para la parte de referencias puedes usar un archivo .bib o seguir el formato que convenga
 
 \begin{thebibliography}{99}
 
-\bibitem{c1} Jon Krohn, Grant Beyleveld, Aglaé Bassens, 2019, ``Deep Learning Illustrated (capítulo 10),'' .
-\bibitem{c2} W.-K. Chen, Linear Networks and Systems (Book style).	Belmont, CA: Wadsworth, 1993, pp. 123--135.
+\bibitem{swati2019} Z. N. K. Swati \textit{et al.}, ``Brain tumor classification for MR images using transfer learning and fine-tuning,'' \textit{Comput. Med. Imaging Graph.}, vol. 75, pp. 34--46, Jul. 2019, doi: 10.1016/j.compmedimag.2019.05.001.
+\bibitem{c1} J. Krohn, G. Beyleveld, and A. Bassens, \textit{Deep Learning Illustrated: A Visual, Interactive Guide to Artificial Intelligence}. Boston, MA, USA: Addison-Wesley, 2019, ch. 10, pp. 159--194.
+\bibitem{he2016} K. He, X. Zhang, S. Ren, and J. Sun, ``Deep residual learning for image recognition,'' in \textit{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, Las Vegas, NV, USA, 2016, pp. 770--778, doi: 10.1109/CVPR.2016.90.
+\bibitem{deng2009} J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and L. Fei-Fei, ``ImageNet: A large-scale hierarchical image database,'' in \textit{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, Miami, FL, USA, 2009, pp. 248--255, doi: 10.1109/CVPR.2009.5206848.
 
 \end{thebibliography}
 
